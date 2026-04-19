@@ -4,6 +4,9 @@ A production-grade ELT pipeline that ingests Concept2 Logbook workout data
 into Postgres through three medallion layers, orchestrated by **Dagster** and
 loaded by **dlt**.
 
+![](pace_trend_scatter.png)
+
+
 ```
 Concept2 API ──dlt──► concept2_bronze.results   (raw)
                            │
