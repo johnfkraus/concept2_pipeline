@@ -1,0 +1,38 @@
+#[build-system]
+#requires = ["setuptools"]
+#build-backend = "setuptools.backends.legacy:build"
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "concept2_pipeline"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "dagster>=1.8",
+    "dagster-webserver>=1.8",
+    "dagster-postgres>=0.24",
+    "dagster-embedded-elt>=0.24",
+    "dlt[postgres]>=0.5",
+    "requests",
+    "requests-oauthlib",
+    "pandas",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "matplotlib",
+    "plotly",
+    "kaleido",          # plotly static image export
+]
+
+#[tool.uv.extra-build-dependencies]
+#concept2-pipeline = ["setuptools.backends"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["concept2_pipeline*"]
+
+[tool.dagster]
+module_name = "concept2_pipeline.definitions"
