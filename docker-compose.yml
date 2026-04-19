@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: concept2
+      POSTGRES_PASSWORD: concept2pass
+      POSTGRES_DB: concept2
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U concept2"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  dagster_webserver:
+    build: .
+    command: dagster-webserver -h 0.0.0.0 -p 3000 -w workspace.yaml
+    ports:
+      - "3000:3000"
+    environment:
+      DAGSTER_POSTGRES_USER: concept2
+      DAGSTER_POSTGRES_PASSWORD: concept2pass
+      DAGSTER_POSTGRES_DB: concept2_dagster
+      DAGSTER_POSTGRES_HOST: postgres
+      DAGSTER_POSTGRES_PORT: 5432
+      C2_CLIENT_ID: ${C2_CLIENT_ID}
+      C2_CLIENT_SECRET: ${C2_CLIENT_SECRET}
+      C2_ACCESS_TOKEN: ${C2_ACCESS_TOKEN}
+      PG_CONN: "postgresql://concept2:concept2pass@postgres:5432/concept2"
+    volumes:
+      - ./charts_output:/app/charts_output
+      - ./.dlt:/app/.dlt
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  dagster_daemon:
+    build: .
+    command: dagster-daemon run -w workspace.yaml
+    environment:
+      DAGSTER_POSTGRES_USER: concept2
+      DAGSTER_POSTGRES_PASSWORD: concept2pass
+      DAGSTER_POSTGRES_DB: concept2_dagster
+      DAGSTER_POSTGRES_HOST: postgres
+      DAGSTER_POSTGRES_PORT: 5432
+      C2_CLIENT_ID: ${C2_CLIENT_ID}
+      C2_CLIENT_SECRET: ${C2_CLIENT_SECRET}
+      C2_ACCESS_TOKEN: ${C2_ACCESS_TOKEN}
+      PG_CONN: "postgresql://concept2:concept2pass@postgres:5432/concept2"
+    volumes:
+      - ./charts_output:/app/charts_output
+      - ./.dlt:/app/.dlt
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pg_data:
