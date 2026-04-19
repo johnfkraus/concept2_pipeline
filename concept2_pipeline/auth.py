@@ -69,21 +69,37 @@ def obtain_token() -> str:
 
     os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
 
-    parsed   = urlparse(REDIRECT_URI)
-    port     = parsed.port or 8000
-    ready    = threading.Event()
+    parsed = urlparse(REDIRECT_URI)
+    port   = parsed.port or 8000
 
-    class _ReadyServer(HTTPServer):
-        def server_bind(self):
-            super().server_bind()
-            ready.set()
+    # Reset class-level state in case obtain_token() is called more than once
+    _CallbackHandler.auth_code = None
+    _CallbackHandler.error     = None
 
-    server = _ReadyServer(("localhost", port), _CallbackHandler)
-    thread = threading.Thread(target=lambda: (server.handle_request(), server.server_close()), daemon=True)
+    # serving_started is set from inside the thread the moment serve_forever()
+    # is about to enter its select loop — guaranteeing the socket is accepting.
+    serving_started = threading.Event()
+    code_received   = threading.Event()
+
+    # Patch the handler so it signals the main thread as soon as a code arrives
+    class _SignallingHandler(_CallbackHandler):
+        def do_GET(self):
+            super().do_GET()
+            code_received.set()   # wake the main thread immediately
+
+    server = HTTPServer(("localhost", port), _SignallingHandler)
+    # SO_REUSEADDR is already set by HTTPServer; bind now so port is reserved
+    # before the browser opens.
+
+    def _serve():
+        serving_started.set()     # signal AFTER the server object is ready
+        server.serve_forever()    # blocks; processes requests until shutdown()
+
+    thread = threading.Thread(target=_serve, daemon=True)
     thread.start()
 
-    if not ready.wait(timeout=5):
-        sys.exit("[ERROR] Callback server failed to start.")
+    if not serving_started.wait(timeout=5):
+        sys.exit("[ERROR] Callback server failed to start within 5 seconds.")
 
     import webbrowser
     oauth = OAuth2Session(CLIENT_ID, redirect_uri=REDIRECT_URI, scope=SCOPE)
@@ -92,7 +108,10 @@ def obtain_token() -> str:
     print(f"\nOpening browser for Concept2 authorization…\n{auth_url}\n")
     webbrowser.open(auth_url)
 
-    thread.join(timeout=120)
+    # Wait for the callback (up to 120 s), then shut the server down cleanly
+    code_received.wait(timeout=120)
+    server.shutdown()
+    thread.join()
 
     if _CallbackHandler.error:
         sys.exit(f"[ERROR] OAuth error: {_CallbackHandler.error}")

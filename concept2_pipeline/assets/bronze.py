@@ -21,8 +21,8 @@ from __future__ import annotations
 import os
 
 import dlt
-from dagster import AssetExecutionContext
 from dagster_embedded_elt.dlt import DagsterDltResource, dlt_assets
+from sqlalchemy import create_engine, text
 
 from concept2_pipeline.sources.concept2_source import concept2_source
 
@@ -47,7 +47,7 @@ _bronze_pipeline = dlt.pipeline(
     group_name="bronze",
 )
 def concept2_bronze_assets(
-    context: AssetExecutionContext,
+    context,
     dlt: DagsterDltResource,
 ) -> None:
     """
@@ -55,16 +55,11 @@ def concept2_bronze_assets(
 
     Incremental behaviour
     ---------------------
-    dlt persists the highest `date` value seen across runs in its internal
-    state table (``concept2_bronze._dlt_pipeline_state``).  On every
-    subsequent materialization only workouts newer than that cursor are
-    fetched from the API, keeping API calls and data transfer minimal.
-
-    To force a full reload (e.g. after a schema change), delete the dlt
-    state row for this pipeline or run with ``--full-refresh`` via the CLI.
+    On first run: fetches all pages from the API (no date filter).
+    On subsequent runs: queries concept2_bronze.results for the most
+    recent `date` value and passes it as `updated_after` to the API,
+    so only new workouts are fetched.
     """
-    # Re-instantiate the source at runtime so the real token is used
-    # (avoids the placeholder used at import time for asset-spec generation)
     access_token = os.environ.get("C2_ACCESS_TOKEN", "")
     if not access_token:
         raise RuntimeError(
@@ -72,8 +67,58 @@ def concept2_bronze_assets(
             "Run `python -m concept2_pipeline.auth` to obtain a token."
         )
 
+    # ── Determine incremental cursor ───────────────────────────────────────
+    updated_after: str | None = None
+    pg_conn = os.environ.get("PG_CONN", "")
+    if pg_conn:
+        try:
+            engine = create_engine(pg_conn, pool_pre_ping=True)
+            with engine.connect() as conn:
+                # Check table exists first
+                exists = conn.execute(text("""
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.tables
+                        WHERE table_schema = 'concept2_bronze'
+                          AND table_name   = 'results'
+                    )
+                """)).scalar()
+                if exists:
+                    # Discover the actual table name dlt used
+                    row = conn.execute(text("""
+                        SELECT table_name FROM information_schema.tables
+                        WHERE table_schema = 'concept2_bronze'
+                          AND table_type   = 'BASE TABLE'
+                          AND table_name LIKE '%result%'
+                        ORDER BY table_name LIMIT 1
+                    """)).fetchone()
+                    bronze_tbl = row[0] if row else None
+                    max_date = None
+                    if bronze_tbl:
+                        max_date = conn.execute(
+                            text(f'SELECT MAX(date) FROM concept2_bronze."{bronze_tbl}"')
+                        ).scalar()
+                    if max_date is not None:
+                        # Format as ISO date string for the API filter
+                        updated_after = str(max_date)[:10]  # YYYY-MM-DD
+                        context.log.info(
+                            f"Incremental run: fetching workouts after {updated_after}"
+                        )
+                    else:
+                        context.log.info("Bronze table exists but is empty — full load.")
+                else:
+                    context.log.info("First run — performing full load from Concept2 API.")
+            engine.dispose()
+        except Exception as e:
+            context.log.warning(f"Could not determine incremental cursor: {e}. Doing full load.")
+    else:
+        context.log.warning("PG_CONN not set — cannot determine cursor, doing full load.")
+
+    # ── Run dlt pipeline ───────────────────────────────────────────────────
     yield from dlt.run(
         context=context,
-        dlt_source=concept2_source(access_token=access_token),
+        dlt_source=concept2_source(
+            access_token=access_token,
+            updated_after=updated_after,
+        ),
         dlt_pipeline=_bronze_pipeline,
     )

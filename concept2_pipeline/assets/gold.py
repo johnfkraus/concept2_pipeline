@@ -29,9 +29,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from dagster import AssetExecutionContext, AssetKey, asset
+from dagster import asset
 
 from concept2_pipeline.resources.postgres_resource import PostgresResource
+from concept2_pipeline.assets.silver import silver_workouts
 
 # Output directory (override via CHARTS_OUTPUT_DIR env var)
 CHARTS_DIR = Path(os.getenv("CHARTS_OUTPUT_DIR", "charts_output"))
@@ -240,7 +241,7 @@ def chart_weekly_volume(df: pd.DataFrame) -> tuple[str, str]:
 @asset(
     name="gold_charts",
     group_name="gold",
-    deps=[AssetKey(["silver_workouts"])],
+    deps=[silver_workouts],
     description=(
         "Publication-ready Plotly charts (PNG + interactive HTML) generated "
         "from silver workout data. Saved to charts_output/."
@@ -250,7 +251,7 @@ def chart_weekly_volume(df: pd.DataFrame) -> tuple[str, str]:
     },
 )
 def gold_charts(
-    context: AssetExecutionContext,
+    context,
     postgres: PostgresResource,
 ) -> None:
     """
@@ -262,6 +263,21 @@ def gold_charts(
 
     Chart paths are surfaced in the Dagster asset panel metadata.
     """
+    # ── Guard: confirm silver table exists ───────────────────────────────────
+    exists_df = postgres.query_df("""
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'concept2_silver'
+              AND table_name   = 'workouts'
+        ) AS exists
+    """)
+    if not bool(exists_df["exists"].iloc[0]):
+        raise RuntimeError(
+            "concept2_silver.workouts does not exist yet. "
+            "Materialize the silver asset before running gold."
+        )
+
     context.log.info("Loading silver data…")
     df = postgres.query_df("""
         SELECT

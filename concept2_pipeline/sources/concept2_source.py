@@ -22,7 +22,7 @@ Key design decisions
 from __future__ import annotations
 
 import os
-from typing import Iterator
+from typing import Iterator, Optional
 
 import dlt
 import requests
@@ -41,7 +41,7 @@ def _headers(token: str) -> dict:
 @dlt.source(name="concept2")
 def concept2_source(
     access_token: str = dlt.secrets.value,
-    updated_after: str | None = None,
+    updated_after: Optional[str] = None,
 ) -> list:
     """
     DLT source yielding Concept2 Logbook resources.
@@ -52,7 +52,8 @@ def concept2_source(
         Bearer token from the OAuth flow (stored in dlt secrets or env var).
     updated_after:
         ISO-8601 date string; when provided, only workouts on or after this
-        date are fetched.  Managed automatically by dlt's incremental state.
+        date are fetched from the API.  The bronze asset reads the most recent
+        date from Postgres and passes it here on incremental runs.
     """
     return [
         results_resource(access_token=access_token, updated_after=updated_after),
@@ -78,24 +79,21 @@ def concept2_source(
 )
 def results_resource(
     access_token: str,
-    updated_after: dlt.sources.incremental[str] = dlt.sources.incremental(
-        "date",
-        initial_value=None,   # None = fetch everything on first run
-    ),
+    updated_after: Optional[str] = None,
 ) -> Iterator[dict]:
     """
-    Paginated Concept2 workout results, incrementally loaded by `date`.
+    Paginated Concept2 workout results.
 
-    On the first run `updated_after.last_value` is None so all pages are
-    fetched.  On subsequent runs only pages newer than the stored cursor are
-    requested via the `updated_after` query parameter.
+    Incremental loading is handled by the pipeline state stored in Postgres.
+    On the first run all pages are fetched.  On subsequent runs the caller
+    passes `updated_after` (an ISO date string) so only new workouts are
+    requested from the API via the `updated_after` query parameter.
     """
     headers = _headers(access_token)
     params: dict = {"per_page": PER_PAGE}
 
-    if updated_after.last_value is not None:
-        # API supports `updated_after` (ISO date) to filter server-side
-        params["updated_after"] = updated_after.last_value
+    if updated_after is not None:
+        params["updated_after"] = updated_after
 
     url: str | None = f"{API_BASE}/users/me/results"
 
@@ -133,6 +131,9 @@ def results_resource(
             yield row
 
         # Follow pagination; clear params so the next URL is used as-is
+        # pagination = payload.get("meta", {}).get("pagination", {})
+        # url        = pagination.get("links", {}).get("next")
         pagination = payload.get("meta", {}).get("pagination", {})
-        url        = pagination.get("links", {}).get("next")
+        links      = pagination.get("links") or {}
+        url        = links.get("next") if isinstance(links, dict) else None
         params     = {}

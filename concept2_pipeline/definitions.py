@@ -54,6 +54,12 @@ concept2_full_pipeline_job = dg.define_asset_job(
     description="Ingest → clean → chart the full Concept2 workout history.",
 )
 
+silver_gold_refresh_job = dg.define_asset_job(
+    name="silver_gold_refresh_job",
+    selection=dg.AssetSelection.groups("silver", "gold"),
+    description="Re-build silver + gold whenever bronze is updated.",
+)
+
 
 # ── Schedule ──────────────────────────────────────────────────────────────────
 # Runs daily at 06:00 UTC.  Because the bronze layer is incremental, only
@@ -61,7 +67,7 @@ concept2_full_pipeline_job = dg.define_asset_job(
 
 concept2_daily_schedule = dg.ScheduleDefinition(
     name="concept2_daily_refresh",
-    cron_schedule="0 6 * * *",          # 06:00 UTC every day
+    cron_schedule="0 6 * * *",
     job=concept2_full_pipeline_job,
     default_status=dg.DefaultScheduleStatus.RUNNING,
     description=(
@@ -77,11 +83,7 @@ concept2_daily_schedule = dg.ScheduleDefinition(
 
 @dg.asset_sensor(
     asset_key=dg.AssetKey(["concept2_bronze", "results"]),
-    job=dg.define_asset_job(
-        name="silver_gold_refresh_job",
-        selection=dg.AssetSelection.groups("silver", "gold"),
-        description="Re-build silver + gold whenever bronze is updated.",
-    ),
+    job=silver_gold_refresh_job,
     name="bronze_results_sensor",
     default_status=dg.DefaultSensorStatus.RUNNING,
     minimum_interval_seconds=60,
@@ -102,11 +104,7 @@ defs = dg.Definitions(
     resources=resources,
     jobs=[
         concept2_full_pipeline_job,
-        dg.define_asset_job(
-            name="silver_gold_refresh_job",
-            selection=dg.AssetSelection.groups("silver", "gold"),
-            description="Re-build silver + gold whenever bronze is updated.",
-        ),
+        silver_gold_refresh_job,
     ],
     schedules=[concept2_daily_schedule],
     sensors=[bronze_results_sensor],
