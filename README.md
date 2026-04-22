@@ -2,11 +2,11 @@
 
 A production-grade ELT pipeline that ingests Concept2 Logbook rowing workout data into Postgres through three medallion layers, orchestrated by **Dagster** and loaded by **dlt**.
 
+![Dagster GUI](dagster_gui.png)
+
+![Pace Trend Visualization](pace_trend_scatter.png)
+
 ![https://www.concept2.com/ergdata](setting_up_workout.jpg)
-
-
-![](pace_trend_scatter.png)
-
 
 ```
 Concept2 API ──dlt──► concept2_bronze.results   (raw)
