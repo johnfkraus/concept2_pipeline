@@ -1,6 +1,5 @@
 .env
 .dlt/secrets.toml
-charts_output/
 __pycache__/
 *.pyc
 *.pyo
