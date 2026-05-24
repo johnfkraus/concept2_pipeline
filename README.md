@@ -2,11 +2,54 @@
 
 A production-grade ELT pipeline that ingests Concept2 Logbook rowing workout data into Postgres through three "medallion" layers, orchestrated by **Dagster** and loaded by **dlt**.
 
-![Dagster GUI](dagster_gui.png)
+<div align="center">
+  <img src="dagster_gui.png" alt="Dagster GUI">
+  <p><em>Dagster interface</em></p>
+</div>
 
-![Pace Trend Visualization](pace_trend_scatter.png)
+<div align="center">
+  <img src="pace_trend_scatter.png" alt="Pace Trend Scatter Chart with Moving Average">
+  <p><em>Pace Trend Scatter Chart with Moving Average</em></p>
+</div>
 
-![https://www.concept2.com/ergdata](setting_up_workout.jpg)
+<div align="center">
+  <img src="setting_up_workout.jpg" alt="The Concept2 PM5 Performance Monitor. Source: Concept2">
+  <p><em>The Concept2 PM5 Performance Monitor. Source: Concept2</em></p>
+</div>
+
+<!-- 
+The Concept2 PM5 (Performance Monitor 5) is the small, square computer monitor attached to Concept2 fitness equipment—most famously their Model D RowErg (rowing machine), but also their BikeErg and SkiErg.
+
+It is widely considered the gold standard for fitness monitors in commercial gyms, CrossFit boxes, and home setups.
+
+Here is what makes the PM5 so popular:
+
+1. Brutal, Dead-Accurate Calibration
+The biggest reason athletes love the PM5 is its reliability. It auto-calibrates against the machine's flywheel wind resistance on every single stroke or spin. Because it accounts for local air density, temperature, and even a dusty flywheel, a 500-meter split time on a PM5 in a humid garage in Florida is mathematically identical to a 500-meter split in a high-altitude gym in Colorado. This accuracy is why it’s used for official indoor rowing world records.
+
+2. Modern Connectivity
+While it looks a bit retro with its backlit LCD screen, the PM5 has excellent wireless capabilities:
+
+Bluetooth & ANT+: It seamlessly connects to heart rate monitors (like Garmin or Polar straps), smartwatches, and tablets.
+
+ErgData App: Concept2 has its own free app that syncs your phone to the PM5 to instantly log your workouts, track progress, and join a global daily leaderboard.
+
+Third-Party Apps: It plays nice with popular apps like Zwift, EXR, and Regatta.
+
+3. Diverse Data Views
+By using the Display button at the bottom of the monitor, you can cycle through a few different ways to view your workout data in real-time:
+
+All Data: Shows your pace (usually measured in time per 500 meters), total time, distance, and stroke rate (strokes per minute).
+
+Force Graph: Traces a live visual curve of exactly how much power you are applying throughout your physical pull, helping you fix flaws in your technique.
+
+Pace Boat: Puts a little graphic of a second boat on screen to race against a target pace or your own personal record.
+
+4. Zero Charging Required
+The PM5 takes two D-cell batteries, but you rarely have to change them. The monitor is actually self-powered by the generator inside the machine's flywheel. As soon as you start pulling or pedaling, the spinning flywheel provides all the electricity the screen needs to stay on, dramatically extending the battery life.
+
+-->
+
 
 ```
 Concept2 API ──dlt──► concept2_bronze.results   (raw)
@@ -24,7 +67,7 @@ Concept2 API ──dlt──► concept2_bronze.results   (raw)
 
 ---
 
-## Architecture
+## "Medallion" Architecture
 
 | Layer  | Tool        | Postgres schema      | Description |
 |--------|-------------|----------------------|-------------|
