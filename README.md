@@ -1,6 +1,6 @@
 # Concept2 Logbook Pipeline
 
-A production-grade ELT pipeline that ingests Concept2 Logbook rowing workout data into Postgres through three medallion layers, orchestrated by **Dagster** and loaded by **dlt**.
+A production-grade ELT pipeline that ingests Concept2 Logbook rowing workout data into Postgres through three "medallion" layers, orchestrated by **Dagster** and loaded by **dlt**.
 
 ![Dagster GUI](dagster_gui.png)
 
