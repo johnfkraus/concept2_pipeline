@@ -12,3 +12,7 @@ dist/
 
 .idea
 **/.DS_Store
+*.swp
+.tmp*/
+archives/
+docs/
