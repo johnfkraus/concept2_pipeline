@@ -8,7 +8,12 @@ __pycache__/
 /logs/
 *.egg-info/
 dist/
+
+# Ignore the local virtual environment directory created by uv
 .venv/
+
+# Do NOT ignore the lockfile
+!uv.lock
 
 .idea
 **/.DS_Store

@@ -2,6 +2,10 @@
 
 A production-grade ELT pipeline that ingests Concept2 Logbook rowing workout data into Postgres through three "medallion" layers, orchestrated by **Dagster** and loaded by **dlt**.
 
+Dagster is a modern, open-source orchestration platform designed for data engineering, data science, and data analytics.
+
+dlt (Data Load Tool) is an open-source Python library designed to solve one of the most tedious parts of data engineering: loading data from various sources (APIs, files, databases) into destinations (warehouses, data lakes, or databases).  In the traditional ELT (Extract, Load, Transform) paradigm, dlt focuses heavily on the E and the L. dlt is essentially an "EL" framework for Python developers.
+
 <div align="center">
   <img src="dagster_gui.png" alt="Dagster GUI">
   <p><em>Dagster interface</em></p>
@@ -12,9 +16,16 @@ A production-grade ELT pipeline that ingests Concept2 Logbook rowing workout dat
   <p><em>Pace Trend Scatter Chart with Moving Average</em></p>
 </div>
 
-<div align="center">
+<!--
+<figure align="center">
   <img src="setting_up_workout.jpg" alt="The Concept2 PM5 Performance Monitor. Source: Concept2">
-  <p><em>The Concept2 PM5 Performance Monitor. Source: Concept2</em></p>
+  <figcaption><em>The Concept2 PM5 Performance Monitor. Source: <a href="https://www.concept2.com/">Concept2</a></em></figcaption>
+</figure>
+-->
+
+<div align="center">
+  <img src="setting_up_workout.jpg" alt="The Concept2 PM5 Performance Monitor">
+  <p><em>The Concept2 PM5 Performance Monitor. Source: <a href="https://www.concept2.com/">Concept2</a></em></p>
 </div>
 
 <!-- 
