@@ -111,7 +111,7 @@ every subsequent daily run fetches only the new rows from the past 24 hours.
 
 To force a full reload:
 ```bash
-# Delete the dlt state for this pipeline then re-run
+# Delete the dlt state for this pipeline (typically in the ~/.dlt directory) then re-run
 python -c "
 import dlt
 p = dlt.pipeline('concept2_bronze', destination='postgres', dataset_name='concept2_bronze')
@@ -129,10 +129,15 @@ p.drop()
 - Postgres running locally (or update `PG_CONN`)
 
 ### 2. Install
+```bash
+# If you haven't installed uv on your local machine yet (MacOS/Linux):
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 ```bash
 cd concept2_pipeline
-pip install -e .
+# pip install -e .
+uv sync
 ```
 
 ### 3. Configure environment
@@ -146,8 +151,37 @@ cp .env.example .env
 
 ```bash
 python -m concept2_pipeline.auth
-# Browser opens, approve access, token is written to the .env file.
 ```
+
+Your web browser opens to https://log.concept2.com/login.  Enter your username and password.
+
+[//]: # (![Web browser login screen]&#40;images/web-browser-login-screen.png&#41;)
+
+[//]: # (<div align="center">)
+
+[//]: # (  <img src="images/dagster_gui.png" alt="Dagster GUI">)
+
+[//]: # (  <p><em>Dagster interface</em></p>)
+
+[//]: # (</div>)
+
+<div align="center">
+<figure>
+<a>
+  <img src="images/web-browser-login-screen.png" alt="Web browser login screen" width="500">
+  <figcaption><em>Web browser login screen</em></figcaption>
+</figure>
+</div>
+
+Approve access in the browser; a token is written to the .env file.
+
+<div align="center">
+<figure>
+<a>
+  <img src="images/authorize.png" alt="Approve access" width="300">
+  <figcaption><em>Approve access</em></figcaption>
+</figure>
+</div>
 
 ### 5. Export env vars
 
