@@ -168,7 +168,7 @@ Your web browser opens to https://log.concept2.com/login.  Enter your username a
 <div align="center">
 <figure>
   <img src="images/web-browser-login-screen.png" alt="Web browser login screen" width="500">
-  <figcaption><em>Web browser login screen</em></figcaption>
+  <p><em>Web browser login screen</em></p>
 </figure>
 </div>
 
@@ -177,7 +177,7 @@ Approve access in the browser; a token is written to the .env file.
 <div align="center">
 <figure>
   <img src="images/authorize.png" alt="Approve access" width="300">
-  <figcaption><em>Approve access</em></figcaption>
+  <p><em>Approve access</em></p>
 </figure>
 </div>
 
