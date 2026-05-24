@@ -25,7 +25,7 @@ dlt (Data Load Tool) is an open-source Python library designed to solve one of t
 
 <div align="center">
   <img src="setting_up_workout.jpg" alt="The Concept2 PM5 Performance Monitor">
-  <p><em>The Concept2 PM5 Performance Monitor. Source: <a href="https://www.concept2.com/">Concept2</a>.  The PM5 transmits your rowing performance details via bluetooth to your mobile phone.</em></p>
+  <p><em>The Concept2 PM5 Performance Monitor. Source: <a href="https://www.concept2.com/">Concept2</a>.  The PM5 transmits your rowing performance details via bluetooth to the ErgData application on your mobile phone.</em></p>
 </div>
 
 <!-- 
@@ -58,9 +58,7 @@ Pace Boat: Puts a little graphic of a second boat on screen to race against a ta
 
 4. Zero Charging Required
 The PM5 takes two D-cell batteries, but you rarely have to change them. The monitor is actually self-powered by the generator inside the machine's flywheel. As soon as you start pulling or pedaling, the spinning flywheel provides all the electricity the screen needs to stay on, dramatically extending the battery life.
-
 -->
-
 
 ```
 Concept2 API ──dlt──► concept2_bronze.results   (raw)
@@ -79,6 +77,8 @@ Concept2 API ──dlt──► concept2_bronze.results   (raw)
 ---
 
 ## "Medallion" Architecture
+
+Medallion architecture is a data design pattern that organizes data within a lakehouse or data lake into three progressive layers—Bronze, Silver, and Gold—to incrementally improve data quality, structure, and trust.  The medallion multi-hop approach allows raw data to be refined into business-ready assets while maintaining full traceability and governance.
 
 | Layer  | Tool        | Postgres schema      | Description |
 |--------|-------------|----------------------|-------------|
@@ -138,7 +138,7 @@ cp .env.example .env
 
 ```bash
 python -m concept2_pipeline.auth
-# Browser opens, approve access, token is written to .env
+# Browser opens, approve access, token is written to the .env file.
 ```
 
 ### 5. Export env vars
