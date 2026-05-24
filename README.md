@@ -295,3 +295,85 @@ concept2_pipeline/
 | `PG_CONN` | SQLAlchemy Postgres URL (used by silver + gold layers) |
 | `CHARTS_OUTPUT_DIR` | Override chart output directory (default: `charts_output`) |
 | `DAGSTER_POSTGRES_*` | Dagster run-history DB (see docker-compose.yml) |
+
+
+
+## Explore your workout data in PostgreSQL using psql.
+
+```bash
+psql -h localhost -p 5432 -U postgres -d postgres
+Password for user postgres:
+psql (17.10 (Homebrew), server 17.7)
+Type "help" for help.
+
+postgres=# \c concept2
+psql (17.10 (Homebrew), server 17.7)
+You are now connected to database "concept2" as user "postgres".
+
+concept2=# \dt concept2*.*
+                        List of relations
+         Schema          |        Name         | Type  |  Owner
+-------------------------+---------------------+-------+----------
+ concept2_bronze         | _dlt_loads          | table | postgres
+ concept2_bronze         | _dlt_pipeline_state | table | postgres
+ concept2_bronze         | _dlt_version        | table | postgres
+ concept2_bronze         | results             | table | postgres
+ concept2_bronze_staging | _dlt_version        | table | postgres
+ concept2_bronze_staging | results             | table | postgres
+ concept2_silver         | workouts            | table | postgres
+(7 rows)
+
+
+concept2=# \d concept2_silver.workouts
+                         Table "concept2_silver.workouts"
+        Column         |           Type           | Collation | Nullable | Default
+-----------------------+--------------------------+-----------+----------+---------
+ workout_id            | bigint                   |           | not null |
+ workout_at            | timestamp with time zone |           |          |
+ workout_date          | date                     |           |          |
+ year                  | integer                  |           |          |
+ month                 | integer                  |           |          |
+ day_of_week           | integer                  |           |          |
+ activity_type         | text                     |           |          |
+ activity_type_clean   | text                     |           |          |
+ workout_type          | character varying        |           |          |
+ distance_m            | double precision         |           |          |
+ distance_km           | numeric                  |           |          |
+ time_tenths           | bigint                   |           |          |
+ time_formatted        | character varying        |           |          |
+ duration              | interval                 |           |          |
+ pace_seconds_per_500m | numeric                  |           |          |
+ stroke_rate           | integer                  |           |          |
+ calories              | integer                  |           |          |
+ watts                 | integer                  |           |          |
+ heart_rate_avg        | integer                  |           |          |
+ heart_rate_max        | integer                  |           |          |
+ heart_rate_min        | integer                  |           |          |
+ weight_class          | character varying        |           |          |
+ verified              | boolean                  |           |          |
+ ranked                | boolean                  |           |          |
+ source                | character varying        |           |          |
+ loaded_at             | timestamp with time zone |           |          |
+Indexes:
+    "workouts_pkey" PRIMARY KEY, btree (workout_id)
+    "ix_silver_workouts_date" btree (workout_date)
+
+```
+
+
+
+### Explore the workout data:
+```bash
+concept2=# select workout_at, activity_type, distance_m, time_formatted, pace_seconds_per_500m, stroke_rate, verified, ranked, source from concept2_silver.workouts;
+       workout_at       | activity_type | distance_m | time_formatted | pace_seconds_per_500m | stroke_rate | verified | ranked |   source
+------------------------+---------------+------------+----------------+-----------------------+-------------+----------+--------+-------------
+ 2025-01-31 12:13:00-05 | rower         |        892 | 5:06.9         |                172.03 |          18 | t        | f      | ErgData iOS
+ 2025-02-01 08:25:00-05 | rower         |       1690 | 10:06.4        |                179.41 |          18 | t        | f      | ErgData iOS
+ 2025-02-02 09:51:00-05 | rower         |       2513 | 15:07.9        |                180.64 |          17 | t        | f      | ErgData iOS
+ 2025-02-08 05:54:00-05 | rower         |       3142 | 20:06.3        |                191.96 |          16 | t        | f      | ErgData iOS
+ 2025-02-12 16:01:00-05 | rower         |       2364 | 15:07.0        |                191.84 |          16 | t        | f      | ErgData iOS
+ 2025-02-15 06:09:00-05 | rower         |       4871 | 30:08.8        |                185.67 |          16 | t        | f      | ErgData iOS
+ 2025-02-16 11:49:00-05 | rower         |       4949 | 30:08.6        |                182.72 |          17 | t        | f      | ErgData iOS
+ 2025-02-17 12:59:00-05 | rower         |       5130 | 30:06.7        |                176.09 |          17 | t
+ ...
+```
